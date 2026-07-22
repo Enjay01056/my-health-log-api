@@ -212,6 +212,66 @@ def search_records(start: str, end: str):
         "records": search_results,
     }
 
+# 저장된 건강 기록의 평균 통계를 계산한다.
+@app.get("/stats")
+def get_stats():
+    # 저장된 기록이 없으면 계산할 수 있는 통계가 없음을 반환한다.
+    if not records:
+        return {
+            "count": 0,
+            "average_weight": None,
+            "average_bmi": None,
+            "average_systolic": None,
+            "average_diastolic": None,
+            "average_blood_sugar": None,
+            "average_steps": None,
+            "average_sleep_hours": None,
+        }
+
+    # 저장된 건강 기록의 개수를 구한다.
+    record_count = len(records)
+
+    # 각 건강 항목의 평균을 계산한다.
+    average_weight = sum(
+        record["weight"] for record in records
+    ) / record_count
+
+    average_bmi = sum(
+        record["bmi"] for record in records
+    ) / record_count
+
+    average_systolic = sum(
+        record["systolic"] for record in records
+    ) / record_count
+
+    average_diastolic = sum(
+        record["diastolic"] for record in records
+    ) / record_count
+
+    average_blood_sugar = sum(
+        record["blood_sugar"] for record in records
+    ) / record_count
+
+    average_steps = sum(
+        record["steps"] for record in records
+    ) / record_count
+
+    average_sleep_hours = sum(
+        record["sleep_hours"] for record in records
+    ) / record_count
+
+    # 평균 결과를 소수점 둘째 자리까지 반올림하여 반환한다.
+    return {
+        "count": record_count,
+        "average_weight": round(average_weight, 2),
+        "average_bmi": round(average_bmi, 2),
+        "average_systolic": round(average_systolic, 2),
+        "average_diastolic": round(average_diastolic, 2),
+        "average_blood_sugar": round(average_blood_sugar, 2),
+        "average_steps": round(average_steps, 2),
+        "average_sleep_hours": round(average_sleep_hours, 2),
+    }
+
 # 특정 건강 기록 조회
 @app.get("/records/{record_id}")
 def get_record(record_id: int):
