@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 app = FastAPI(
@@ -18,16 +18,35 @@ DATA_FILE = Path(__file__).resolve().parent / "data.json"
 
 # 사용자가 입력할 건강 기록의 형식
 class RecordIn(BaseModel):
-    date: str
-    weight: float
-    height: float
-    systolic: int
-    diastolic: int
-    blood_sugar: int
-    steps: int = 0
-    sleep_hours: float = 0.0
-    memo: str = ""
+    # 날짜는 YYYY-MM-DD 형식으로 입력한다.
+    date: str = Field(
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+    )
 
+    # 몸무게와 키는 0보다 커야 한다.
+    weight: float = Field(gt=0)
+    height: float = Field(gt=0)
+
+    # 혈압과 혈당은 0보다 커야 한다.
+    systolic: int = Field(gt=0)
+    diastolic: int = Field(gt=0)
+    blood_sugar: int = Field(gt=0)
+
+    # 걸음 수는 음수가 될 수 없다.
+    steps: int = Field(default=0, ge=0)
+
+    # 수면 시간은 0시간 이상 24시간 이하여야 한다.
+    sleep_hours: float = Field(
+        default=0.0,
+        ge=0,
+        le=24,
+    )
+
+    # 메모는 최대 500자까지 입력할 수 있다.
+    memo: str = Field(
+        default="",
+        max_length=500,
+    )
 
 # JSON 파일에서 건강 기록을 불러온다.
 def load_records() -> list[dict]:

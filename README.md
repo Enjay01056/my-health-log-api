@@ -156,10 +156,10 @@ my-health-log-api/
 ├── main.py
 ├── requirements.txt
 ├── Dockerfile
-├── .gitignore
 ├── .dockerignore
-├── README.md
-└── data.example.json
+├── .gitignore
+├── data.example.json
+└── README.md
 ```
 
 실행 과정에서 생성되는 다음 파일과 폴더는 GitHub에 포함하지 않습니다.
@@ -225,26 +225,59 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Docker 실행 방법
+## Docker 실행
 
-Docker 설정 구현 후 작성할 예정입니다.
+### 1. Docker 이미지 빌드
+
+프로젝트 최상위 폴더에서 다음 명령어를 실행합니다.
 
 ```bash
 docker build -t my-health-log-api .
-docker run -p 8000:8000 my-health-log-api
+```
+
+### 2. Docker 컨테이너 실행
+
+```bash
+docker run --name my-health-log-api-container -p 8000:8000 my-health-log-api
+```
+
+컨테이너가 실행되면 다음 주소에서 API 문서를 확인할 수 있습니다.
+
+```text
+http://localhost:8000/docs
+```
+
+기본 API 주소는 다음과 같습니다.
+
+```text
+http://localhost:8000/
+```
+
+### 3. 컨테이너 종료
+
+실행 중인 터미널에서 `Ctrl + C`를 누르거나 다음 명령어를 실행합니다.
+
+```bash
+docker stop my-health-log-api-container
+```
+
+### 4. 기존 컨테이너 다시 실행
+
+```bash
+docker start -a my-health-log-api-container
 ```
 
 ---
 
 ## 데이터 저장
 
-건강 기록은 프로젝트의 `data.json` 파일에 저장할 예정입니다.
+실제 건강 기록이 저장되는 `data.json`은 Docker 이미지에 포함하지 않습니다.
 
-실제 건강 정보가 포함될 수 있으므로 `data.json`은
-`.gitignore`에 등록하여 GitHub에 올리지 않습니다.
+컨테이너에서 생성한 기록은 같은 컨테이너를 중지하고 다시 실행할 때는
+유지되지만, 컨테이너 자체를 삭제하면 함께 삭제될 수 있습니다.
 
-데이터 형식 확인을 위한 예제 파일은 `data.example.json`으로 제공합니다.
-데이터 형식 확인을 위한 `data.example.json`은 최종 문서 정리 단계에서 추가할 예정입니다.
+저장 데이터의 구조는 `data.example.json`에서 확인할 수 있습니다.
+예제 파일에는 정상 범위 기록과 건강 경고가 발생하는 기록이 포함되어 있습니다.
 
 ---
 
@@ -264,6 +297,15 @@ docker run -p 8000:8000 my-health-log-api
 - 건강 기록을 추가·수정·삭제하면 변경 내용이 `data.json`에 저장됩니다.
 - 서버를 다시 실행하면 `data.json`에 저장된 기존 기록을 불러옵니다.
 - `data.json`이 없으면 빈 건강 기록 목록으로 시작합니다.
+- Docker 이미지는 `Dockerfile`을 이용해 생성합니다.
+- FastAPI 서버는 컨테이너 내부에서 `0.0.0.0:8000`으로 실행됩니다.
+- 실제 건강 기록 파일인 `data.json`은 Docker 이미지에 포함하지 않습니다.
+- 날짜는 `YYYY-MM-DD` 형식만 허용합니다.
+- 키와 몸무게, 혈압, 혈당은 `0`보다 큰 값만 허용합니다.
+- 걸음 수는 음수가 될 수 없습니다.
+- 수면 시간은 `0시간 이상 24시간 이하`만 허용합니다.
+- 메모는 최대 `500자`까지 입력할 수 있습니다.
+- 입력값 검증에 실패하면 `422` 오류를 반환하고 기록을 저장하지 않습니다.
 
 ### 구현 예정 규칙
 
@@ -287,7 +329,8 @@ docker run -p 8000:8000 my-health-log-api
 - [x] 날짜 범위 검색
 - [x] 건강 기록 통계
 - [x] JSON 파일 저장
-- [ ] Docker 설정
+- [x] Docker 컨테이너 실행
+- [x] Pydantic 요청 데이터 검증
 - [ ] 최종 테스트 및 문서 정리
 
 ---

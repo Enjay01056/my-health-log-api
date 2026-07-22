@@ -1,0 +1,40 @@
+[
+  {
+    "date": "2026-07-20",
+    "weight": 60.0,
+    "height": 165.0,
+    "systolic": 118,
+    "diastolic": 76,
+    "blood_sugar": 95,
+    "steps": 5000,
+    "sleep_hours": 7.0,
+    "memo": "정상 범위 예시 기록",
+    "id": 1,
+    "bmi": 22.04,
+    "bmi_category": "정상",
+    "bp_category": "정상",
+    "sugar_category": "정상",
+    "warnings": []
+  },
+  {
+    "date": "2026-07-21",
+    "weight": 80.0,
+    "height": 165.0,
+    "systolic": 145,
+    "diastolic": 95,
+    "blood_sugar": 130,
+    "steps": 2500,
+    "sleep_hours": 5.5,
+    "memo": "경고가 발생하는 예시 기록",
+    "id": 2,
+    "bmi": 29.38,
+    "bmi_category": "비만",
+    "bp_category": "고혈압",
+    "sugar_category": "당뇨 의심",
+    "warnings": [
+      "BMI가 비만 범위입니다.",
+      "혈압이 고혈압 범위입니다.",
+      "공복 혈당이 당뇨 의심 범위입니다."
+    ]
+  }
+]
