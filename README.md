@@ -258,7 +258,7 @@ docker run -p 8000:8000 my-health-log-api
 - [x] Pydantic 입력 모델 작성
 - [x] 건강 기록 추가 API
 - [x] 전체 및 단건 조회 API
-- [ ] 건강 기록 수정 및 삭제 API
+- [x] 건강 기록 수정 및 삭제 API
 - [ ] BMI 계산 및 분류
 - [ ] 혈압 및 혈당 분류
 - [ ] 건강 경고 생성
