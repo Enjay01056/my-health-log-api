@@ -187,6 +187,30 @@ def get_records():
         "records": records,
     }
 
+# 시작일과 종료일 사이의 건강 기록을 검색한다.
+@app.get("/search")
+def search_records(start: str, end: str):
+    # 시작일이 종료일보다 늦으면 400 오류를 반환한다.
+    if start > end:
+        raise HTTPException(
+            status_code=400,
+            detail="시작일은 종료일보다 늦을 수 없습니다.",
+        )
+
+    # 시작일과 종료일을 모두 포함하여 기록을 검색한다.
+    search_results = [
+        record
+        for record in records
+        if start <= record["date"] <= end
+    ]
+
+    # 검색 조건과 검색된 기록을 반환한다.
+    return {
+        "start": start,
+        "end": end,
+        "count": len(search_results),
+        "records": search_results,
+    }
 
 # 특정 건강 기록 조회
 @app.get("/records/{record_id}")
