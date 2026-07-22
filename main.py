@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -9,9 +12,8 @@ app = FastAPI(
 )
 
 
-# 건강 기록을 임시로 저장하는 리스트
-# 현재는 서버를 종료하면 저장된 기록이 사라진다.
-records = []
+# 건강 기록을 저장할 JSON 파일의 위치를 지정한다.
+DATA_FILE = Path(__file__).resolve().parent / "data.json"
 
 
 # 사용자가 입력할 건강 기록의 형식
@@ -25,6 +27,49 @@ class RecordIn(BaseModel):
     steps: int = 0
     sleep_hours: float = 0.0
     memo: str = ""
+
+
+# JSON 파일에서 건강 기록을 불러온다.
+def load_records() -> list[dict]:
+    # 저장 파일이 아직 없으면 빈 리스트를 반환한다.
+    if not DATA_FILE.exists():
+        return []
+
+    try:
+        # UTF-8 형식으로 JSON 파일을 읽는다.
+        with DATA_FILE.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        # 파일 내용이 리스트인 경우에만 건강 기록으로 사용한다.
+        if isinstance(data, list):
+            return data
+
+        # 리스트가 아닌 데이터가 저장되어 있으면 빈 리스트를 반환한다.
+        return []
+
+    # JSON 형식이 잘못되었거나 파일을 읽지 못한 경우 빈 리스트를 반환한다.
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+# 건강 기록을 JSON 파일에 저장한다.
+def save_records(records_data: list[dict]) -> None:
+    try:
+        # 한글이 깨지지 않도록 UTF-8 형식으로 저장한다.
+        with DATA_FILE.open("w", encoding="utf-8") as file:
+            json.dump(
+                records_data,
+                file,
+                ensure_ascii=False,
+                indent=2,
+            )
+
+    # 파일 저장에 실패하면 서버가 종료되지 않고 오류 응답을 반환하도록 한다.
+    except OSError as error:
+        raise HTTPException(
+            status_code=500,
+            detail="건강 기록을 저장하는 중 오류가 발생했습니다.",
+        ) from error
 
 
 # 몸무게와 키를 이용해 BMI를 계산한다.
@@ -148,6 +193,10 @@ def build_record_data(record: RecordIn, record_id: int) -> dict:
     return record_data
 
 
+# 서버가 시작될 때 JSON 파일에 저장된 건강 기록을 불러온다.
+records = load_records()
+
+
 # 기본 주소
 @app.get("/")
 def read_root():
@@ -175,6 +224,9 @@ def create_record(record: RecordIn):
     # 완성된 기록을 리스트에 저장한다.
     records.append(record_data)
 
+    # 변경된 건강 기록을 JSON 파일에 저장한다.
+    save_records(records)
+
     # 저장된 건강 기록을 반환한다.
     return record_data
 
@@ -186,6 +238,7 @@ def get_records():
         "count": len(records),
         "records": records,
     }
+
 
 # 시작일과 종료일 사이의 건강 기록을 검색한다.
 @app.get("/search")
@@ -204,13 +257,14 @@ def search_records(start: str, end: str):
         if start <= record["date"] <= end
     ]
 
-    # 검색 조건과 검색된 기록을 반환한다.
+    # 검색 조건과 검색 결과를 반환한다.
     return {
         "start": start,
         "end": end,
         "count": len(search_results),
         "records": search_results,
     }
+
 
 # 저장된 건강 기록의 평균 통계를 계산한다.
 @app.get("/stats")
@@ -272,6 +326,7 @@ def get_stats():
         "average_sleep_hours": round(average_sleep_hours, 2),
     }
 
+
 # 특정 건강 기록 조회
 @app.get("/records/{record_id}")
 def get_record(record_id: int):
@@ -304,6 +359,9 @@ def update_record(record_id: int, record: RecordIn):
             # 기존 기록을 수정된 기록으로 교체한다.
             records[index] = updated_record
 
+            # 변경된 건강 기록을 JSON 파일에 저장한다.
+            save_records(records)
+
             # 수정된 건강 기록을 반환한다.
             return updated_record
 
@@ -323,6 +381,9 @@ def delete_record(record_id: int):
         if record["id"] == record_id:
             # 해당 위치의 기록을 리스트에서 삭제한다.
             deleted_record = records.pop(index)
+
+            # 변경된 건강 기록을 JSON 파일에 저장한다.
+            save_records(records)
 
             # 삭제 완료 메시지와 삭제한 ID를 반환한다.
             return {
